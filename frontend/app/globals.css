@@ -1,0 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Inter:wght@300;400;500;600&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body { @apply bg-brand-parchment text-brand-ink font-sans antialiased; }
+  h1,h2,h3,h4 { @apply font-serif; }
+}
+
+@layer components {
+  .gs-badge               { @apply inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full; }
+  .gs-badge-featured      { @apply bg-purple-50 text-purple-800; }
+  .gs-badge-verified      { @apply bg-brand-green-light text-brand-green; }
+  .gs-badge-community     { @apply bg-blue-50 text-blue-800; }
+  .gs-badge-fast          { @apply bg-brand-amber-light text-amber-800; }
+  .gs-btn-primary         { @apply bg-brand-green text-white font-medium px-5 py-2.5 rounded-full hover:bg-brand-green-mid transition-colors text-sm; }
+  .gs-btn-amber           { @apply bg-brand-amber text-white font-medium px-5 py-2.5 rounded-full hover:bg-amber-700 transition-colors text-sm; }
+  .gs-btn-outline         { @apply border border-brand-green text-brand-green font-medium px-5 py-2.5 rounded-full hover:bg-brand-green-light transition-colors text-sm; }
+  .gs-card                { @apply bg-white border border-brand-rule rounded-xl p-4; }
+  .section-divider        { @apply border-b-2 border-brand-green pb-1.5 mb-3 font-serif text-brand-green; }
+  .gs-input               { @apply w-full border border-brand-rule rounded-lg px-4 py-2.5 text-sm bg-white focus:outline-none focus:border-brand-green; }
+  .gs-label               { @apply block text-xs uppercase tracking-wider text-gray-500 mb-1.5; }
+}
