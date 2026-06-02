@@ -1,0 +1,131 @@
+services:
+  # ── Django REST API ──────────────────────────────────────────
+  - type: web
+    name: georgetown-signal-api
+    runtime: python
+    region: oregon
+    plan: starter
+    rootDir: backend
+    buildCommand: >
+      pip install -r requirements.txt &&
+      python manage.py collectstatic --noinput &&
+      python manage.py migrate --noinput
+    startCommand: gunicorn config.wsgi:application --workers 2 --threads 2 --bind 0.0.0.0:$PORT --timeout 120
+    healthCheckPath: /api/stats/
+    autoDeploy: true
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings
+      - key: DEBUG
+        value: "False"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: ALLOWED_HOSTS
+        value: georgetown-signal-api.onrender.com
+      - key: DATABASE_URL
+        fromDatabase:
+          name: georgetown-signal-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: georgetown-signal-redis
+          type: redis
+          property: connectionString
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://georgetownsignal.com,https://georgetown-signal.vercel.app
+      - key: FRONTEND_URL
+        value: https://georgetownsignal.com
+      # Set these manually in Render dashboard after first deploy:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: CALLANCHOR_API_KEY
+        sync: false
+
+  # ── Celery Worker ────────────────────────────────────────────
+  - type: worker
+    name: georgetown-signal-worker
+    runtime: python
+    region: oregon
+    plan: starter
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: celery -A config.celery worker --loglevel=info --concurrency=2
+    autoDeploy: true
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings
+      - key: DEBUG
+        value: "False"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: georgetown-signal-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: georgetown-signal-redis
+          type: redis
+          property: connectionString
+      - key: FRONTEND_URL
+        value: https://georgetownsignal.com
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: CALLANCHOR_API_KEY
+        sync: false
+
+  # ── Celery Beat (scheduler) ──────────────────────────────────
+  - type: worker
+    name: georgetown-signal-beat
+    runtime: python
+    region: oregon
+    plan: starter
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: celery -A config.celery beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    autoDeploy: true
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings
+      - key: DEBUG
+        value: "False"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: georgetown-signal-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: georgetown-signal-redis
+          type: redis
+          property: connectionString
+
+  # ── Redis ────────────────────────────────────────────────────
+  - type: redis
+    name: georgetown-signal-redis
+    region: oregon
+    plan: starter
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
+
+databases:
+  # ── PostgreSQL (fallback — use Supabase connection string instead) ──
+  # This is included for completeness. In production, point DATABASE_URL
+  # at your Supabase connection string and ignore this block.
+  - name: georgetown-signal-db
+    databaseName: georgetown_signal
+    region: oregon
+    plan: starter
